@@ -22,7 +22,13 @@ header{background:linear-gradient(135deg,#0d0d22,#14142e);border-bottom:1px soli
 header h1{font-family:var(--head);font-size:18px;font-weight:800;color:#fff;letter-spacing:-.3px}
 header p{font-size:11px;color:var(--text2);margin-top:2px}
 /* LAYOUT */
-.main{display:grid;grid-template-columns:320px 1fr;flex:1;overflow:hidden}
+.main{
+  display:grid;
+  grid-template-columns:320px 1fr;
+  flex:1;
+  overflow:visible; /* ✅ permite interacción */
+}
+
 .left-panel{border-right:1px solid var(--border);overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px;background:var(--s1)}
 .right-panel{overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px}
 /* CARDS */
@@ -495,13 +501,14 @@ function sortReady(queue, algo) {
   } else if (algo==='sjf') {
     q.sort((a,b)=>a.weight-b.weight||a.arrival-b.arrival||a.name.localeCompare(b.name));
   } else if (algo==='spn') {
+    // SPN evalúa el peso en base al CPU total
     q.sort((a,b)=>a.totalCPU-b.totalCPU||a.arrival-b.arrival||a.name.localeCompare(b.name));
   } else if (algo==='str') {
+    // STR evalúa por el tiempo de CPU restante
     q.sort((a,b)=>a.cpuRemaining-b.cpuRemaining||a.arrival-b.arrival||a.name.localeCompare(b.name));
   } else if (algo==='prio') {
+    // NOTA: Acá un número mayor = mayor prioridad. Si tu profe usa 1 como prioridad máxima, cambiá ">" por "<"
     q.sort((a,b)=>b.priority-a.priority||a.arrival-b.arrival||a.name.localeCompare(b.name));
-  } else if (algo==='rr') {
-    // RR: preserve insertion order — already maintained
   }
   return q;
 }
@@ -517,24 +524,26 @@ function simulate(procs, algo, quantum) {
   simTrace = [];
   const log = (t,msg) => simTrace.push(`t=${String(t).padStart(3,'0')}: ${msg}`);
 
-  // Deep copy + init runtime state
   const ps = procs.map(p => ({
     ...p,
-    bursts:       p.bursts.map(b=>({...b})),
-    state:        'new',
-    burstIdx:     0,
+    bursts: p.bursts.map(b=>({...b})),
+    state: 'new',
+    burstIdx: 0,
     cpuRemaining: 0,
-    ioFinishTime: -1,
-    ioDevice:     null,
-    finishTime:   null,
-    startTime:    null,
-    quantumLeft:  0,
-    waitTime:     0,
+    finishTime: null,
+    startTime: null,
+    quantumLeft: 0,
+    waitTime: 0,
   }));
 
   let readyQueue = [];
-  let waitQueue  = [];
-  let cpu        = null;
+  let io1Queue = [];
+  let io2Queue = [];
+  
+  let cpu = null;
+  let io1 = null;
+  let io2 = null;
+
   const cpuTimeline = [];
   const io1Timeline = [];
   const io2Timeline = [];
@@ -542,110 +551,125 @@ function simulate(procs, algo, quantum) {
   let t = 0;
 
   while (t < MAX) {
-    if (ps.every(p=>p.state==='kill')) break;
+    if (ps.every(p => p.state === 'kill')) break;
 
-    // 1. ARRIVALS
-    const arrivals = [];
+    let enteringReady = [];
+
+    // 1. ARRIBOS DESDE NEW
     for (const p of ps) {
-      if (p.state==='new' && p.arrival<=t) {
-        p.state='ready';
+      if (p.state === 'new' && p.arrival === t) {
+        p.state = 'ready';
         p.cpuRemaining = p.bursts[0].duration;
-        readyQueue.push(p);
-        arrivals.push(p);
-        log(t,`ARRIBO ${p.name} → Ready (cpuRem=${p.cpuRemaining})`);
+        enteringReady.push(p);
+        log(t, `ARRIBO ${p.name}`);
       }
     }
 
-    // 2. IO COMPLETIONS
-    const ioComps = [];
-    for (const p of [...waitQueue]) {
-      if (p.ioFinishTime===t) {
-        waitQueue = waitQueue.filter(x=>x!==p);
-        p.burstIdx++;
-        p.state='ready';
-        p.cpuRemaining = p.bursts[p.burstIdx].duration;
-        readyQueue.push(p);
-        ioComps.push(p);
-        log(t,`IO_FIN ${p.name} → Ready (burstIdx=${p.burstIdx}, cpuRem=${p.cpuRemaining})`);
+    // 2. COMPLETAMIENTO DE I/O (Salen de los dispositivos)
+    if (io1 && io1.ioFinishTime === t) {
+      io1.burstIdx++;
+      io1.state = 'ready';
+      io1.cpuRemaining = io1.bursts[io1.burstIdx].duration;
+      enteringReady.push(io1);
+      log(t, `IO_FIN ${io1.name} (I/O 1)`);
+      io1 = null;
+    }
+    if (io2 && io2.ioFinishTime === t) {
+      io2.burstIdx++;
+      io2.state = 'ready';
+      io2.cpuRemaining = io2.bursts[io2.burstIdx].duration;
+      enteringReady.push(io2);
+      log(t, `IO_FIN ${io2.name} (I/O 2)`);
+      io2 = null;
+    }
+
+    // 3. COMPLETAMIENTO DE CPU O VENCIMIENTO DE QUANTUM
+    if (cpu) {
+      if (cpu.cpuRemaining === 0) {
+        // Terminó su ráfaga actual de CPU
+        cpu.burstIdx++;
+        if (cpu.burstIdx >= cpu.bursts.length) {
+          cpu.state = 'kill';
+          cpu.finishTime = t;
+          log(t, `KILL ${cpu.name}`);
+        } else {
+          // Va a I/O, entra en la cola correspondiente
+          const ioBurst = cpu.bursts[cpu.burstIdx];
+          cpu.state = 'wait';
+          if (ioBurst.type === 'io1') {
+            io1Queue.push(cpu);
+          } else {
+            io2Queue.push(cpu);
+          }
+          log(t, `IO_REQ ${cpu.name} a ${ioBurst.type.toUpperCase()}`);
+        }
+        cpu = null;
+      } else if (algo === 'rr' && cpu.quantumLeft <= 0) {
+        // Se le acabó el Quantum (Expulsión)
+        cpu.state = 'ready';
+        enteringReady.push(cpu);
+        log(t, `QUANTUM_EXP ${cpu.name}`);
+        cpu = null;
       }
     }
 
-    // 3. SORT READY QUEUE
-    if (algo!=='rr') {
-      if (arrivals.length||ioComps.length||readyQueue.length) {
+    // 4. RESOLUCIÓN DE COLISIONES EN READY QUEUE
+    if (enteringReady.length > 0) {
+      // Las colisiones se resuelven por antigüedad (tiempo de arribo más chico)
+      enteringReady.sort((a,b) => a.arrival - b.arrival || a.name.localeCompare(b.name));
+      readyQueue.push(...enteringReady);
+
+      // Si no es RR, reordenamos toda la cola según el algoritmo (STR, SPN, etc.)
+      if (algo !== 'rr') {
         readyQueue = sortReady(readyQueue, algo);
       }
-    } else {
-      // FIFO collisions: sort only arrivals+ioComps block by arrival time, append to tail
-      // RR: new arrivals & io returns appended; collision within same tick sorted by arrival
-      if (arrivals.length||ioComps.length) {
-        const newEntrants = [...arrivals,...ioComps].sort((a,b)=>a.arrival-b.arrival||a.name.localeCompare(b.name));
-        // remove from tail and re-append sorted (they were pushed above)
-        const existing = readyQueue.filter(p=>!newEntrants.includes(p));
-        readyQueue = [...existing,...newEntrants];
-      }
     }
 
-    // 4. PREEMPTION
-    if (cpu && isPreemptive(algo)) {
-      if (algo==='rr' && cpu.quantumLeft<=0 && cpu.cpuRemaining>0) {
-        log(t,`QUANTUM_EXP ${cpu.name} → Ready`);
-        cpu.state='ready';
+    // 5. EVALUACIÓN DE EXPULSIÓN POR LLEGADA (STR, SPN, Prio)
+    if (cpu && isPreemptive(algo) && algo !== 'rr' && readyQueue.length > 0) {
+      if (shouldPreempt(cpu, readyQueue[0], algo)) {
+        log(t, `PREEMPT ${cpu.name} expulsado por ${readyQueue[0].name}`);
+        cpu.state = 'ready';
         readyQueue.push(cpu);
-        cpu=null;
-      } else if (algo!=='rr' && (arrivals.length||ioComps.length) && readyQueue.length>0) {
-        if (shouldPreempt(cpu, readyQueue[0], algo)) {
-          log(t,`PREEMPT ${cpu.name}(rem=${cpu.cpuRemaining}) por ${readyQueue[0].name}`);
-          cpu.state='ready';
-          readyQueue.push(cpu);
-          readyQueue = sortReady(readyQueue, algo);
-          cpu=null;
-        }
+        readyQueue = sortReady(readyQueue, algo);
+        cpu = null;
       }
     }
 
-    // 5. PICK NEXT
-    if (!cpu && readyQueue.length>0) {
+    // 6. ASIGNACIÓN DE DISPOSITIVOS I/O (FIFO)
+    if (!io1 && io1Queue.length > 0) {
+      io1 = io1Queue.shift();
+      io1.ioFinishTime = t + io1.bursts[io1.burstIdx].duration;
+      log(t, `IO_START ${io1.name} en I/O 1`);
+    }
+    if (!io2 && io2Queue.length > 0) {
+      io2 = io2Queue.shift();
+      io2.ioFinishTime = t + io2.bursts[io2.burstIdx].duration;
+      log(t, `IO_START ${io2.name} en I/O 2`);
+    }
+
+    // 7. ASIGNACIÓN DE CPU
+    if (!cpu && readyQueue.length > 0) {
       cpu = readyQueue.shift();
-      cpu.state='execute';
-      if (cpu.startTime===null) cpu.startTime=t;
-      if (algo==='rr') cpu.quantumLeft=quantum;
-      log(t,`CPU_START ${cpu.name} (cpuRem=${cpu.cpuRemaining})`);
+      cpu.state = 'execute';
+      if (cpu.startTime === null) cpu.startTime = t;
+      if (algo === 'rr') cpu.quantumLeft = quantum;
+      log(t, `CPU_START ${cpu.name}`);
     }
 
-    // 6. TICK
+    // 8. EJECUCIÓN DEL TICK ACTUAL (El tiempo pasa)
     if (cpu) {
-      cpuTimeline.push({t, name:cpu.name});
+      cpuTimeline.push({t, name: cpu.name});
       cpu.cpuRemaining--;
-      if (algo==='rr') cpu.quantumLeft--;
+      if (algo === 'rr') cpu.quantumLeft--;
+      // Aumentamos el tiempo de espera de los que están en la cola
       for (const p of readyQueue) p.waitTime++;
-
-      if (cpu.cpuRemaining===0) {
-        cpu.burstIdx++;
-        if (cpu.burstIdx>=cpu.bursts.length) {
-          cpu.state='kill';
-          cpu.finishTime=t+1;
-          log(t+1,`KILL ${cpu.name}`);
-          cpu=null;
-        } else {
-          const ioBurst = cpu.bursts[cpu.burstIdx];
-          cpu.ioFinishTime = t+1+ioBurst.duration;
-          cpu.ioDevice     = ioBurst.type;
-          cpu.state='wait';
-          waitQueue.push(cpu);
-          log(t+1,`IO_START ${cpu.name} dev=${ioBurst.type} dur=${ioBurst.duration}`);
-          cpu=null;
-        }
-      }
     } else {
-      cpuTimeline.push({t, name:'idle'});
+      cpuTimeline.push({t, name: 'idle'});
     }
 
-    // Record I/O device timelines
-    for (const p of waitQueue) {
-      if (p.ioDevice==='io1') io1Timeline.push({t, name:p.name});
-      else if (p.ioDevice==='io2') io2Timeline.push({t, name:p.name});
-    }
+    if (io1) io1Timeline.push({t, name: io1.name});
+    if (io2) io2Timeline.push({t, name: io2.name});
 
     t++;
   }
