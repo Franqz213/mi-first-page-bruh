@@ -155,7 +155,7 @@ select option{background:var(--s2)}
             </optgroup>
             <optgroup label="Expulsivas">
               <option value="rr">Round Robin</option>
-              <option value="str">STR – Shortest Time Remaining</option>
+              <option value="str">STRN – Shortest Time Remaining Next</option>
               <option value="prio">Prioridades</option>
             </optgroup>
           </select>
@@ -336,7 +336,7 @@ const ALGO_INFO = {
   sjf:  'No expulsivo. Peso = CPU + I/O total. Se ejecuta el de menor peso. Puede causar Starvation. La Ready Queue se reordena cuando llegan nuevos procesos.',
   spn:  'Expulsivo. Peso = solo tiempos de CPU. Un proceso de menor peso puede expulsar al actual, que vuelve a la Ready Queue.',
   rr:   'Expulsivo. Orden FIFO con quantum. Al agotarse el quantum, el proceso vuelve al final de la Ready Queue. Colisiones se resuelven por antigüedad.',
-  str:  'Expulsivo. Si llega un proceso con menor tiempo restante de CPU, expulsa al actual.',
+  str: 'Expulsivo. Se considera el tiempo total de CPU restante del proceso. Si llega uno con menor tiempo total restante, expulsa al actual.',
   prio: 'Expulsivo. Se ejecuta el proceso de mayor prioridad. Puede causar Starvation.'
 };
 
@@ -505,7 +505,7 @@ function sortReady(queue, algo) {
     q.sort((a,b)=>a.totalCPU-b.totalCPU||a.arrival-b.arrival||a.name.localeCompare(b.name));
   } else if (algo==='str') {
     // STR evalúa por el tiempo de CPU restante
-    q.sort((a,b)=>a.cpuRemaining-b.cpuRemaining||a.arrival-b.arrival||a.name.localeCompare(b.name));
+    q.sort((a,b)=>a.cpuTotalRemaining-b.cpuTotalRemaining||a.arrival-b.arrival||a.name.localeCompare(b.name));
   } else if (algo==='prio') {
     // NOTA: Acá un número mayor = mayor prioridad. Si tu profe usa 1 como prioridad máxima, cambiá ">" por "<"
     q.sort((a,b)=>b.priority-a.priority||a.arrival-b.arrival||a.name.localeCompare(b.name));
@@ -514,7 +514,7 @@ function sortReady(queue, algo) {
 }
 
 function shouldPreempt(cur, head, algo) {
-  if (algo==='str')  return head.cpuRemaining < cur.cpuRemaining;
+  if (algo==='str')  return head.cpuTotalRemaining < cur.cpuTotalRemaining;
   if (algo==='prio') return head.priority > cur.priority;
   if (algo==='spn')  return head.totalCPU < cur.totalCPU;
   return false;
@@ -529,6 +529,7 @@ function simulate(procs, algo, quantum) {
     bursts: p.bursts.map(b=>({...b})),
     state: 'new',
     burstIdx: 0,
+    cpuTotalRemaining: p.totalCPU,
     cpuRemaining: 0,
     finishTime: null,
     startTime: null,
@@ -661,6 +662,8 @@ function simulate(procs, algo, quantum) {
     if (cpu) {
       cpuTimeline.push({t, name: cpu.name});
       cpu.cpuRemaining--;
+      cpu.cpuTotalRemaining--;
+
       if (algo === 'rr') cpu.quantumLeft--;
       // Aumentamos el tiempo de espera de los que están en la cola
       for (const p of readyQueue) p.waitTime++;
@@ -909,3 +912,4 @@ function toggleTrace() {
 </script>
 </body>
 </html>
+
