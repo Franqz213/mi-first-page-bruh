@@ -26,7 +26,7 @@ header p{font-size:11px;color:var(--text2);margin-top:2px}
   display:grid;
   grid-template-columns:320px 1fr;
   flex:1;
-  overflow:visible; /* ✅ permite interacción */
+  overflow:visible;
 }
 
 .left-panel{border-right:1px solid var(--border);overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px;background:var(--s1)}
@@ -68,24 +68,102 @@ select option{background:var(--s2)}
 .badge-kill{background:#ff4d6a22;color:var(--red);border:1px solid #ff4d6a44}
 /* ALGO INFO */
 .algo-info{font-size:11px;color:var(--text2);padding:8px 10px;background:var(--s1);border-radius:6px;border-left:3px solid var(--accent);line-height:1.7}
-/* GANTT */
-.gantt-section{padding:0 14px 14px}
-.gantt-section-title{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;padding:8px 14px 4px;border-top:1px solid var(--border)}
-.gantt-section-title:first-child{border-top:none;padding-top:0}
-.gantt-wrap{overflow-x:auto;padding-bottom:4px}
-.gantt-container{position:relative}
-.gantt-row{display:flex;align-items:center;margin-bottom:3px}
-.gantt-label{width:40px;font-size:11px;color:var(--text2);text-align:right;padding-right:8px;flex-shrink:0}
-.gantt-bars{display:flex;align-items:stretch;height:28px;position:relative}
-.gantt-block{height:100%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;border-radius:3px;cursor:default;position:absolute;transition:filter .15s;overflow:visible}
-.gantt-block:hover{filter:brightness(1.2);z-index:10}
-.gantt-block.idle{background:#1e1e30!important;color:var(--text2);border:1px dashed #2a2a45}
-.gantt-axis{position:relative;padding-left:40px;height:16px}
-.gantt-tick-mark{position:absolute;bottom:0;font-size:9px;color:var(--text2);transform:translateX(-50%);white-space:nowrap}
-.gantt-tick-line{position:absolute;top:0;bottom:0;border-left:1px solid #2a2a4544}
-/* TOOLTIP */
-.tooltip{position:absolute;bottom:calc(100% + 5px);left:50%;transform:translateX(-50%);background:#1e1e35;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:10px;white-space:nowrap;pointer-events:none;z-index:100;color:var(--text);display:none}
-.gantt-block:hover .tooltip{display:block}
+
+/* ═══ EXCEL-STYLE GANTT ═══ */
+.gantt-section{padding:14px}
+.gantt-section-title{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;padding:8px 14px 8px;border-top:1px solid var(--border);margin:8px -14px 0}
+.gantt-section-title:first-of-type{border-top:none;margin-top:0}
+
+/* Contenedor scroll */
+.gantt-scroll-wrapper{overflow-x:auto;border:1px solid var(--border);border-radius:6px;margin:8px 0}
+
+/* Tabla estilo Excel */
+.gantt-table{
+  border-collapse:collapse;
+  background:var(--s1);
+  font-size:11px;
+  min-width:100%;
+}
+
+.gantt-table td, .gantt-table th{
+  border:1px solid var(--border);
+  padding:0;
+  height:24px;
+  text-align:center;
+  vertical-align:middle;
+  width:28px;
+  min-width:28px;
+  max-width:28px;
+  overflow:hidden;
+}
+
+/* Header de tiempo */
+.gantt-table th{
+  background:var(--s3);
+  color:var(--text2);
+  font-weight:600;
+  font-size:10px;
+  padding:3px 0;
+  position:sticky;
+  top:0;
+  z-index:2;
+}
+
+/* Primera columna (labels) */
+.gantt-table td:first-child, .gantt-table th:first-child{
+  width:50px;
+  min-width:50px;
+  max-width:50px;
+  padding:2px 6px;
+  text-align:left;
+  font-weight:600;
+  background:var(--s2);
+  position:sticky;
+  left:0;
+  z-index:1;
+  color:var(--accent2);
+}
+
+.gantt-table th:first-child{
+  background:var(--s3);
+  color:var(--text2);
+  font-weight:600;
+}
+
+/* Celdas de proceso */
+.gantt-table td{
+  background:var(--s1);
+  transition:background .1s;
+}
+
+/* Idle */
+.gantt-table td.idle{
+  background:#1e1e30;
+}
+
+/* Con proceso */
+.gantt-table td[data-proc]{
+  background:var(--accent);
+  opacity:.85;
+  font-weight:700;
+  color:#fff;
+  font-size:10px;
+}
+
+.gantt-table td[data-proc="P1"]{background:#6c5fff;opacity:.85}
+.gantt-table td[data-proc="P2"]{background:#1de9a0;opacity:.85}
+.gantt-table td[data-proc="P3"]{background:#ff4d6a;opacity:.85}
+.gantt-table td[data-proc="P4"]{background:#ffc940;opacity:.85}
+.gantt-table td[data-proc="P5"]{background:#22d4f5;opacity:.85}
+.gantt-table td[data-proc="P6"]{background:#ff79c6;opacity:.85}
+.gantt-table td[data-proc="P7"]{background:#8be9fd;opacity:.85}
+.gantt-table td[data-proc="P8"]{background:#50fa7b;opacity:.85}
+
+.gantt-table tbody tr:hover td[data-proc]{
+  opacity:1;
+  box-shadow:inset 0 0 10px rgba(0,0,0,.3);
+}
+
 /* STATS */
 .stats-table{width:100%;border-collapse:collapse;font-size:12px}
 .stats-table th{text-align:left;padding:7px 10px;color:var(--text2);font-weight:400;font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border);letter-spacing:.5px;white-space:nowrap}
@@ -93,35 +171,45 @@ select option{background:var(--s2)}
 .stats-table tr:last-child td{border-bottom:none}
 .stats-table tr:hover td{background:rgba(108,95,255,.04)}
 .proc-dot{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px;vertical-align:middle}
+
 /* LEGEND */
-.legend{display:flex;flex-wrap:wrap;gap:8px;padding:8px 14px}
+.legend{display:flex;flex-wrap:wrap;gap:8px;padding:8px 0;margin-bottom:8px}
 .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
 .legend-dot{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+
 /* EMPTY */
 .empty-state{text-align:center;padding:40px 20px;color:var(--text2)}
 .empty-state .icon{font-size:32px;margin-bottom:10px;opacity:.4}
+
 /* EXEC ORDER */
-.exec-order{display:flex;flex-wrap:wrap;gap:5px;padding:10px 14px}
-.exec-chip{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid transparent}
+.exec-order{display:flex;flex-wrap:wrap;gap:5px;padding:0}
+.exec-chip{padding:4px 10px;border-radius:5px;font-size:11px;font-weight:600;border:1px solid}
+
 /* TRACE */
-.trace-body{display:none;max-height:280px;overflow-y:auto;padding:10px 14px;font-size:11px;color:var(--text2);line-height:1.8}
+.trace-body{display:none;max-height:280px;overflow-y:auto;padding:10px 0;font-size:11px;color:var(--text2);line-height:1.8}
+.trace-body div{padding:2px 14px}
+
 /* SCROLLBAR */
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+
 /* IO BURST INPUTS */
 .io-inputs{display:flex;gap:6px;align-items:center}
 .io-inputs input{width:52px!important}
 .io-inputs span{color:var(--text2);font-size:10px;flex-shrink:0}
+
 /* RESPONSIVE */
 @media(max-width:860px){
   .main{grid-template-columns:1fr;overflow:visible}
   .left-panel{border-right:none;border-bottom:1px solid var(--border)}
 }
+
 /* HINT BOX */
 .hint{font-size:10px;color:var(--text2);padding:6px 8px;background:var(--s1);border-radius:6px;line-height:1.7;margin-bottom:8px}
 .hint code{color:var(--green)}
+
 /* EXAMPLE SELECT */
 .example-select-row{display:flex;gap:6px;align-items:center;margin-bottom:8px}
 .example-select-row select{flex:1}
@@ -254,41 +342,40 @@ select option{background:var(--s2)}
       </div>
     </div>
 
-    <!-- Execution Order -->
-    <div class="card" id="card-order" style="display:none">
-      <div class="card-head"><h2>Orden de ejecución CPU</h2></div>
-      <div id="exec-order" class="exec-order"></div>
-    </div>
-
     <!-- Gantt CPU -->
     <div class="card" id="card-gantt" style="display:none">
       <div class="card-head">
-        <h2>Diagrama de Gantt</h2>
+        <h2>Diagrama de Gantt - CPU</h2>
         <span id="gantt-total" style="font-size:11px;color:var(--text2)"></span>
       </div>
+
       <div id="legend" class="legend"></div>
 
-      <!-- CPU Gantt -->
-      <div class="gantt-section-title">🖥️ CPU</div>
       <div class="gantt-section">
-        <div class="gantt-wrap" id="gantt-wrap-cpu">
-          <div id="gantt-cpu" class="gantt-container"></div>
+        <div class="gantt-scroll-wrapper" id="gantt-cpu-wrapper">
+          <table class="gantt-table" id="gantt-cpu-table">
+            <!-- Generado dinámicamente -->
+          </table>
         </div>
       </div>
 
-      <!-- I/O 1 Gantt -->
-      <div class="gantt-section-title" id="io1-section-title" style="display:none">📥 I/O 1</div>
-      <div class="gantt-section" id="io1-gantt-section" style="display:none">
-        <div class="gantt-wrap" id="gantt-wrap-io1">
-          <div id="gantt-io1" class="gantt-container"></div>
+      <!-- I/O 1 -->
+      <div id="io1-section" style="display:none">
+        <div class="gantt-section-title">📥 I/O 1</div>
+        <div class="gantt-section">
+          <div class="gantt-scroll-wrapper" id="gantt-io1-wrapper">
+            <table class="gantt-table" id="gantt-io1-table"></table>
+          </div>
         </div>
       </div>
 
-      <!-- I/O 2 Gantt -->
-      <div class="gantt-section-title" id="io2-section-title" style="display:none">📤 I/O 2</div>
-      <div class="gantt-section" id="io2-gantt-section" style="display:none">
-        <div class="gantt-wrap" id="gantt-wrap-io2">
-          <div id="gantt-io2" class="gantt-container"></div>
+      <!-- I/O 2 -->
+      <div id="io2-section" style="display:none">
+        <div class="gantt-section-title">📤 I/O 2</div>
+        <div class="gantt-section">
+          <div class="gantt-scroll-wrapper" id="gantt-io2-wrapper">
+            <table class="gantt-table" id="gantt-io2-table"></table>
+          </div>
         </div>
       </div>
     </div>
@@ -329,7 +416,7 @@ let procIdCounter = 0;
 let simTrace = [];
 
 // ═══════════════════════════════════════════
-//  ALGORITHM DESCRIPTIONS (from doc)
+//  ALGORITHM DESCRIPTIONS
 // ═══════════════════════════════════════════
 const ALGO_INFO = {
   fifo: 'No expulsivo. Orden de llegada. Empates por orden alfabético. Colisiones al volver de I/O: gana el proceso con menor tiempo de arribo (más antiguo). Las colisiones en I/O siempre se resuelven por FIFO.',
@@ -341,7 +428,7 @@ const ALGO_INFO = {
 };
 
 // ═══════════════════════════════════════════
-//  EXAMPLES FROM DOCX
+//  EXAMPLES
 // ═══════════════════════════════════════════
 const EXAMPLES = {
   fifo_doc: {
@@ -501,16 +588,28 @@ function sortReady(queue, algo) {
   } else if (algo==='sjf') {
     q.sort((a,b)=>a.weight-b.weight||a.arrival-b.arrival||a.name.localeCompare(b.name));
   } else if (algo==='spn') {
-    // SPN evalúa el peso en base al CPU total
     q.sort((a,b)=>a.totalCPU-b.totalCPU||a.arrival-b.arrival||a.name.localeCompare(b.name));
   } else if (algo==='str') {
-    // STR evalúa por el tiempo de CPU restante
     q.sort((a,b)=>a.cpuTotalRemaining-b.cpuTotalRemaining||a.arrival-b.arrival||a.name.localeCompare(b.name));
   } else if (algo==='prio') {
-    // NOTA: Acá un número mayor = mayor prioridad. Si tu profe usa 1 como prioridad máxima, cambiá ">" por "<"
     q.sort((a,b)=>b.priority-a.priority||a.arrival-b.arrival||a.name.localeCompare(b.name));
   }
   return q;
+}
+
+function mergeIntoReadyQueue(readyQueue, enteringReady, algo) {
+  if (!enteringReady.length) return readyQueue;
+
+  if (algo === 'fifo') {
+    const incoming = [...enteringReady].sort((a,b)=>a.arrival-b.arrival||a.name.localeCompare(b.name));
+    return [...readyQueue, ...incoming];
+  }
+
+  if (algo === 'rr') {
+    return [...readyQueue, ...enteringReady];
+  }
+
+  return sortReady([...readyQueue, ...enteringReady], algo);
 }
 
 function shouldPreempt(cur, head, algo) {
@@ -566,7 +665,7 @@ function simulate(procs, algo, quantum) {
       }
     }
 
-    // 2. COMPLETAMIENTO DE I/O (Salen de los dispositivos)
+    // 2. COMPLETAMIENTO DE I/O
     if (io1 && io1.ioFinishTime === t) {
       io1.burstIdx++;
       io1.state = 'ready';
@@ -587,14 +686,12 @@ function simulate(procs, algo, quantum) {
     // 3. COMPLETAMIENTO DE CPU O VENCIMIENTO DE QUANTUM
     if (cpu) {
       if (cpu.cpuRemaining === 0) {
-        // Terminó su ráfaga actual de CPU
         cpu.burstIdx++;
         if (cpu.burstIdx >= cpu.bursts.length) {
           cpu.state = 'kill';
           cpu.finishTime = t;
           log(t, `KILL ${cpu.name}`);
         } else {
-          // Va a I/O, entra en la cola correspondiente
           const ioBurst = cpu.bursts[cpu.burstIdx];
           cpu.state = 'wait';
           if (ioBurst.type === 'io1') {
@@ -606,7 +703,6 @@ function simulate(procs, algo, quantum) {
         }
         cpu = null;
       } else if (algo === 'rr' && cpu.quantumLeft <= 0) {
-        // Se le acabó el Quantum (Expulsión)
         cpu.state = 'ready';
         enteringReady.push(cpu);
         log(t, `QUANTUM_EXP ${cpu.name}`);
@@ -615,18 +711,9 @@ function simulate(procs, algo, quantum) {
     }
 
     // 4. RESOLUCIÓN DE COLISIONES EN READY QUEUE
-    if (enteringReady.length > 0) {
-      // Las colisiones se resuelven por antigüedad (tiempo de arribo más chico)
-      enteringReady.sort((a,b) => a.arrival - b.arrival || a.name.localeCompare(b.name));
-      readyQueue.push(...enteringReady);
+    readyQueue = mergeIntoReadyQueue(readyQueue, enteringReady, algo);
 
-      // Si no es RR, reordenamos toda la cola según el algoritmo (STR, SPN, etc.)
-      if (algo !== 'rr') {
-        readyQueue = sortReady(readyQueue, algo);
-      }
-    }
-
-    // 5. EVALUACIÓN DE EXPULSIÓN POR LLEGADA (STR, SPN, Prio)
+    // 5. EVALUACIÓN DE EXPULSIÓN POR LLEGADA
     if (cpu && isPreemptive(algo) && algo !== 'rr' && readyQueue.length > 0) {
       if (shouldPreempt(cpu, readyQueue[0], algo)) {
         log(t, `PREEMPT ${cpu.name} expulsado por ${readyQueue[0].name}`);
@@ -637,7 +724,7 @@ function simulate(procs, algo, quantum) {
       }
     }
 
-    // 6. ASIGNACIÓN DE DISPOSITIVOS I/O (FIFO)
+    // 6. ASIGNACIÓN DE DISPOSITIVOS I/O
     if (!io1 && io1Queue.length > 0) {
       io1 = io1Queue.shift();
       io1.ioFinishTime = t + io1.bursts[io1.burstIdx].duration;
@@ -658,14 +745,13 @@ function simulate(procs, algo, quantum) {
       log(t, `CPU_START ${cpu.name}`);
     }
 
-    // 8. EJECUCIÓN DEL TICK ACTUAL (El tiempo pasa)
+    // 8. EJECUCIÓN DEL TICK
     if (cpu) {
       cpuTimeline.push({t, name: cpu.name});
       cpu.cpuRemaining--;
       cpu.cpuTotalRemaining--;
 
       if (algo === 'rr') cpu.quantumLeft--;
-      // Aumentamos el tiempo de espera de los que están en la cola
       for (const p of readyQueue) p.waitTime++;
     } else {
       cpuTimeline.push({t, name: 'idle'});
@@ -701,8 +787,64 @@ function simulate(procs, algo, quantum) {
 }
 
 // ═══════════════════════════════════════════
-//  RENDER
+//  RENDER - EXCEL STYLE GANTT
 // ═══════════════════════════════════════════
+
+function createExcelGanttTable(gantt, procList, totalTime, colorMap) {
+  const table = document.createElement('table');
+  table.className = 'gantt-table';
+
+  // HEADER: tiempo
+  const headerRow = document.createElement('tr');
+  const th0 = document.createElement('th');
+  th0.textContent = '🖥️';
+  headerRow.appendChild(th0);
+
+  for (let t = 0; t < totalTime; t++) {
+    const th = document.createElement('th');
+    th.textContent = t;
+    headerRow.appendChild(th);
+  }
+  table.appendChild(headerRow);
+
+  // FILAS: procesos
+  const procNames = procList.map(p => p.name);
+  procNames.forEach(procName => {
+    const tr = document.createElement('tr');
+    
+    const tdLabel = document.createElement('td');
+    tdLabel.textContent = procName;
+    tdLabel.style.fontWeight = '600';
+    tr.appendChild(tdLabel);
+
+    // Crear un mapa de tiempo -> proceso
+    const timeMap = {};
+    gantt.forEach(block => {
+      if (block.name === procName) {
+        for (let t = block.start; t < block.end; t++) {
+          timeMap[t] = procName;
+        }
+      }
+    });
+
+    // Llenar columnas de tiempo
+    for (let t = 0; t < totalTime; t++) {
+      const td = document.createElement('td');
+      if (timeMap[t]) {
+        td.setAttribute('data-proc', procName);
+        td.textContent = procName;
+        td.style.background = colorMap[procName];
+      } else {
+        td.className = 'idle';
+      }
+      tr.appendChild(td);
+    }
+    table.appendChild(tr);
+  });
+
+  return table;
+}
+
 function runSimulation() {
   const procs = getProcesses();
   if (!procs) return;
@@ -711,7 +853,7 @@ function runSimulation() {
   const {ganttCPU, ganttIO1, ganttIO2, procs:simProcs, totalTime} = simulate(procs, algo, quantum);
 
   document.getElementById('results-empty').style.display='none';
-  ['card-order','card-gantt','card-stats','card-trace'].forEach(id=>{
+  ['card-gantt','card-stats','card-trace'].forEach(id=>{
     document.getElementById(id).style.display='';
   });
   document.getElementById('trace-body').style.display='none';
@@ -720,45 +862,34 @@ function runSimulation() {
   const colorMap = {};
   simProcs.forEach((p,i) => colorMap[p.name]=PROC_COLORS[i%PROC_COLORS.length]);
 
-  renderOrder(ganttCPU, colorMap);
   renderLegend(simProcs, colorMap);
   document.getElementById('gantt-total').textContent=`Tiempo total: ${totalTime}`;
 
+  // Render CPU Gantt (Excel style)
+  const cpuWrapper = document.getElementById('gantt-cpu-wrapper');
+  cpuWrapper.innerHTML = '';
+  cpuWrapper.appendChild(createExcelGanttTable(ganttCPU, simProcs, totalTime, colorMap));
+
+  // I/O 1
   const hasIO1 = ganttIO1.length>0;
+  document.getElementById('io1-section').style.display = hasIO1 ? '' : 'none';
+  if (hasIO1) {
+    const io1Wrapper = document.getElementById('gantt-io1-wrapper');
+    io1Wrapper.innerHTML = '';
+    io1Wrapper.appendChild(createExcelGanttTable(ganttIO1, simProcs, totalTime, colorMap));
+  }
+
+  // I/O 2
   const hasIO2 = ganttIO2.length>0;
-
-  renderSingleGantt('gantt-cpu', ganttCPU, colorMap, totalTime, true);
-
-  document.getElementById('io1-section-title').style.display = hasIO1 ? '' : 'none';
-  document.getElementById('io1-gantt-section').style.display = hasIO1 ? '' : 'none';
-  if (hasIO1) renderSingleGantt('gantt-io1', ganttIO1, colorMap, totalTime, false);
-
-  document.getElementById('io2-section-title').style.display = hasIO2 ? '' : 'none';
-  document.getElementById('io2-gantt-section').style.display = hasIO2 ? '' : 'none';
-  if (hasIO2) renderSingleGantt('gantt-io2', ganttIO2, colorMap, totalTime, false);
+  document.getElementById('io2-section').style.display = hasIO2 ? '' : 'none';
+  if (hasIO2) {
+    const io2Wrapper = document.getElementById('gantt-io2-wrapper');
+    io2Wrapper.innerHTML = '';
+    io2Wrapper.appendChild(createExcelGanttTable(ganttIO2, simProcs, totalTime, colorMap));
+  }
 
   renderStats(simProcs, colorMap);
   renderTrace();
-}
-
-function renderOrder(gantt, colorMap) {
-  const c = document.getElementById('exec-order');
-  c.innerHTML='';
-  const seen = new Set();
-  gantt.forEach(b => {
-    if (b.name==='idle') return;
-    const key = b.name+':'+b.start;
-    if (!seen.has(key)) {
-      seen.add(key);
-      const chip = document.createElement('span');
-      chip.className='exec-chip';
-      chip.style.background=colorMap[b.name]+'22';
-      chip.style.color=colorMap[b.name];
-      chip.style.borderColor=colorMap[b.name]+'66';
-      chip.textContent=`${b.name} [${b.start}→${b.end}]`;
-      c.appendChild(chip);
-    }
-  });
 }
 
 function renderLegend(procs, colorMap) {
@@ -770,87 +901,6 @@ function renderLegend(procs, colorMap) {
     item.innerHTML=`<div class="legend-dot" style="background:${colorMap[p.name]}"></div>${p.name}`;
     leg.appendChild(item);
   });
-  const idle = document.createElement('div');
-  idle.className='legend-item';
-  idle.innerHTML='<div class="legend-dot" style="background:#1e1e30;border:1px dashed #2a2a45"></div>Idle';
-  leg.appendChild(idle);
-}
-
-function renderSingleGantt(containerId, gantt, colorMap, totalTime, showIdle) {
-  const container = document.getElementById(containerId);
-  container.innerHTML='';
-  if (!totalTime||!gantt.length) return;
-
-  const wrapId   = containerId.replace('gantt-','gantt-wrap-');
-  const wrapEl   = document.getElementById(wrapId);
-  const wrapW    = Math.max(500, wrapEl ? wrapEl.clientWidth - 20 : 600);
-  const PX       = Math.max(14, Math.min(48, Math.floor(wrapW / totalTime)));
-  const totalPx  = totalTime * PX;
-
-  // Collect rows
-  const names = [...new Set(gantt.map(b=>b.name))];
-  if (showIdle && !names.includes('idle')) {
-    // check if there's idle in gantt
-  }
-  const rows = showIdle ? names : names.filter(n=>n!=='idle');
-
-  rows.forEach(procName => {
-    const blocks = gantt.filter(b=>b.name===procName);
-    if (!blocks.length) return;
-
-    const rowDiv = document.createElement('div');
-    rowDiv.className='gantt-row';
-
-    const label = document.createElement('div');
-    label.className='gantt-label';
-    label.textContent = procName==='idle' ? '···' : procName;
-    rowDiv.appendChild(label);
-
-    const barsDiv = document.createElement('div');
-    barsDiv.className='gantt-bars';
-    barsDiv.style.cssText=`width:${totalPx}px;height:28px;position:relative;flex-shrink:0`;
-
-    // Grid lines
-    for (let i=0;i<totalTime;i++) {
-      const g=document.createElement('div');
-      g.style.cssText=`position:absolute;left:${i*PX}px;top:0;width:${PX}px;height:100%;border-left:1px solid #2a2a4520`;
-      barsDiv.appendChild(g);
-    }
-
-    blocks.forEach(block => {
-      const dur = block.end-block.start;
-      const div = document.createElement('div');
-      div.className='gantt-block'+(procName==='idle'?' idle':'');
-      div.style.cssText=`left:${block.start*PX+1}px;width:${dur*PX-2}px;`+
-        (procName==='idle'?'':`background:${colorMap[procName]};opacity:.88;box-shadow:0 2px 8px ${colorMap[procName]}44;`);
-      if (dur*PX>20 && procName!=='idle') div.textContent=procName;
-
-      const tip = document.createElement('div');
-      tip.className='tooltip';
-      tip.textContent=`${procName} · t=${block.start}→${block.end} · dur=${dur}`;
-      div.appendChild(tip);
-      barsDiv.appendChild(div);
-    });
-
-    rowDiv.appendChild(barsDiv);
-    container.appendChild(rowDiv);
-  });
-
-  // Axis
-  const axis = document.createElement('div');
-  axis.className='gantt-axis';
-  axis.style.cssText=`position:relative;width:${totalPx+40}px;height:16px;padding-left:40px`;
-  const tickEvery = totalTime<=30?1:totalTime<=60?2:totalTime<=100?5:10;
-  for (let i=0;i<=totalTime;i++) {
-    if (i%tickEvery===0) {
-      const mk=document.createElement('div');
-      mk.className='gantt-tick-mark';
-      mk.style.left=(40+i*PX)+'px';
-      mk.textContent=i;
-      axis.appendChild(mk);
-    }
-  }
-  container.appendChild(axis);
 }
 
 function renderStats(procs, colorMap) {
@@ -912,4 +962,3 @@ function toggleTrace() {
 </script>
 </body>
 </html>
-
